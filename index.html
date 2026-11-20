@@ -241,11 +241,11 @@ function exampleState(){
     var d=new Date(today);d.setDate(d.getDate()-back);
     sessions[ymd(d)]=players.filter(function(p,i){return (i*5+s*3)%7!==0;}).map(function(p){return p.id;});
   });
-  return {v:1,updated:0,examples:true,seasonStart:'2026-09-07',players:players,sessions:sessions,teams:null};
+  return {v:1,updated:0,lastBackup:0,examples:true,seasonStart:'2026-09-07',players:players,sessions:sessions,teams:null};
 }
 function normalize(d){
   return {
-    v:1,updated:+d.updated||0,examples:!!d.examples,seasonStart:d.seasonStart||'2026-09-07',
+    v:1,updated:+d.updated||0,lastBackup:+d.lastBackup||0,examples:!!d.examples,seasonStart:d.seasonStart||'2026-09-07',
     players:Array.isArray(d.players)?d.players.map(function(p){return {id:String(p.id),name:String(p.name||''),r:Object.assign({},p.r),note:String(p.note||'')};}):[],
     sessions:(d.sessions&&typeof d.sessions==='object')?d.sessions:{},
     teams:d.teams||null
@@ -258,7 +258,9 @@ var ui={tab:'squad',sort:'name',date:ymd(new Date())};
 
 /* ---------- saving: this phone always, account when available ---------- */
 var sync={status:'local',ref:null,busy:false,pending:false,timer:null};
+var persistAsked=false;
 function persist(){
+  if(!persistAsked){persistAsked=true;try{if(navigator.storage&&navigator.storage.persist)navigator.storage.persist();}catch(e){}}
   state.updated=Date.now();
   try{localStorage.setItem(LS,JSON.stringify(state));}catch(e){}
   queueRemote();
@@ -412,6 +414,16 @@ function viewSquad(){
     box.append(h('div',{'class':'note'},
       h('div',null,h('strong',{text:'Example squad. '}),'These 16 players are samples so you can try the app. Import your own squad, or clear them to start fresh.'),
       h('div',{'class':'row'},btn('Import my squad',openImport,'primary'),btn('Clear examples',function(){wipeExamples();persist();renderAll();}))));
+  }
+  if(!state.examples&&state.players.length){
+    var age=state.lastBackup?Math.floor((Date.now()-state.lastBackup)/864e5):-1;
+    if(age<0||age>=21){
+      var bb=h('button',{'class':'btn primary',type:'button'},'Save backup file');
+      bb.addEventListener('click',function(){saveBackup(bb,renderAll);});
+      box.append(h('div',{'class':'note'},
+        h('div',null,h('strong',{text:'Back up your squad. '}),age<0?'It is stored only on this phone and has never been backed up.':'Your last backup was '+age+' days ago.'),
+        h('div',{'class':'row'},bb)));
+    }
   }
   var inp=h('input',{id:'add-name',type:'text',placeholder:'Add a player',autocomplete:'off',autocapitalize:'words',enterkeyhint:'done','aria-label':'New player name'});
   function doAdd(){
@@ -653,9 +665,59 @@ function toCSV(){
   });
   return lines.join('\n');
 }
+function fmtDate(ts){return ts?new Date(ts).toLocaleDateString(undefined,{day:'numeric',month:'short',year:'numeric'}):'never';}
+function saveBackup(b,cb){
+  var json=JSON.stringify(state,null,1),name='coachs-clipboard-backup-'+ymd(new Date())+'.json';
+  function done(){state.lastBackup=Date.now();persist();if(cb)cb();else flash(b,'Backup saved');}
+  function viaLink(){
+    var url=URL.createObjectURL(new Blob([json],{type:'application/json'}));
+    var a=h('a',{href:url,download:name});
+    document.body.append(a);a.click();a.remove();
+    setTimeout(function(){URL.revokeObjectURL(url);},4000);
+    done();
+  }
+  try{
+    var file=new File([json],name,{type:'application/json'});
+    if(navigator.canShare&&navigator.canShare({files:[file]})){
+      navigator.share({files:[file],title:'Coach’s Clipboard backup'}).then(done,function(e){if(!e||e.name!=='AbortError')viaLink();});
+      return;
+    }
+  }catch(e){}
+  viaLink();
+}
 function openSettings(){
   var d=h('input',{id:'set-start',type:'date',value:state.seasonStart,'aria-label':'Season start date',
     onchange:function(e){if(parseYmd(e.target.value)){state.seasonStart=e.target.value;persist();renderAll();}}});
+  var save=h('button',{'class':'btn primary',type:'button'},'Save backup file');
+  save.addEventListener('click',function(){saveBackup(save);});
+  var fi=h('input',{type:'file',id:'restore-file',accept:'.json,application/json','aria-label':'Choose backup file',style:'position:absolute;left:-9999px;width:1px;height:1px;opacity:0'});
+  var pick=h('button',{'class':'btn',type:'button'},'Restore from backup file');
+  pick.addEventListener('click',function(){fi.click();});
+  var rinfo=h('p',{'class':'hint'});
+  var rgo=h('button',{'class':'btn danger',type:'button',hidden:true},'Replace my squad with this backup');
+  var pending=null;
+  fi.addEventListener('change',function(){
+    var f=fi.files&&fi.files[0];if(!f)return;
+    f.text().then(function(t){
+      var j=JSON.parse(t);
+      if(!j||!Array.isArray(j.players))throw new Error('bad');
+      pending=normalize(j);pending.examples=false;
+      var n=pending.players.length;
+      rinfo.textContent='This backup has '+n+(n===1?' player':' players')+' and '+Object.keys(pending.sessions).length+' logged sessions. Restoring replaces what is on this phone now.';
+      rgo.hidden=false;
+    }).catch(function(){pending=null;rgo.hidden=true;rinfo.textContent='That file isn’t a Coach’s Clipboard backup.';});
+    fi.value='';
+  });
+  rgo.addEventListener('click',function(){
+    if(!pending)return;
+    state=pending;state.lastBackup=Date.now();persist();closeSheet();
+  });
+  var prot=h('p',{'class':'hint'});
+  if(navigator.storage&&navigator.storage.persisted){
+    navigator.storage.persisted().then(function(ok){
+      prot.textContent=ok?'The browser has marked this data as protected from automatic clearing.':'The browser may clear this data if the phone runs low on space or you stop using the app for a while. A backup file is the safe fix.';
+    },function(){});
+  }
   var copy=h('button',{'class':'btn',type:'button'},'Copy squad as CSV');
   copy.addEventListener('click',function(){copyText(toCSV(),copy);});
   var clr=h('button',{'class':'btn danger',type:'button'},'Clear all players and sessions');
@@ -663,13 +725,18 @@ function openSettings(){
     if(!clr.dataset.arm){clr.dataset.arm='1';clr.textContent='Tap again to clear everything';return;}
     wipeExamples();persist();closeSheet();
   });
-  openSheet('Settings',h('div',{'class':'stack'},
-    h('div',{'class':'field'},h('label',{'for':'set-start','class':'lbl',text:'Season start (Monday of week 1)'}),d,
-      h('p',{'class':'hint',text:'Sets the week number and weekly focus, which follow the 30-week plan in the season workbook.'})),
-    h('div',{'class':'field'},h('span',{'class':'lbl',text:'Backup'}),copy,
-      h('p',{'class':'hint',text:'Copies names, ratings, notes and attendance so you can paste them into a spreadsheet.'})),
-    h('p',{'class':'hint',text:'Your squad is stored in this browser on this phone only. Clearing the browser’s site data will erase it, so use Copy squad as CSV now and then as a backup.'}),
-    clr),function(){renderAll();});
+  openSettings_sheet();
+  function openSettings_sheet(){
+    openSheet('Settings',h('div',{'class':'stack'},
+      h('div',{'class':'field'},h('label',{'for':'set-start','class':'lbl',text:'Season start (Monday of week 1)'}),d,
+        h('p',{'class':'hint',text:'Sets the week number and weekly focus, which follow the 30-week plan in the season workbook.'})),
+      h('div',{'class':'field'},h('span',{'class':'lbl',text:'Backup'}),save,
+        h('p',{'class':'hint',text:'Last backup: '+fmtDate(state.lastBackup)+'. Keep the file in Files, iCloud Drive, or email it to yourself.'}),
+        pick,fi,rinfo,rgo,prot),
+      h('div',{'class':'field'},h('span',{'class':'lbl',text:'Spreadsheet'}),copy,
+        h('p',{'class':'hint',text:'Copies names, ratings, notes and attendance so you can paste them into a spreadsheet.'})),
+      clr),function(){renderAll();});
+  }
 }
 
 /* ---------- shell ---------- */
