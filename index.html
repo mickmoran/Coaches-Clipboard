@@ -1,0 +1,703 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#17613A">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Clipboard">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%2317613A'/%3E%3Cpath d='M20 34l9 9 16-18' fill='none' stroke='white' stroke-width='6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+<link rel="apple-touch-icon" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAALQAAAC0CAIAAACyr5FlAAAD5klEQVR4Xu3d0XHTQBSGUYWhh1BLUk0ojG7ohTJ48Iwn48S27t2VdHd1ziuODdbPJykTzMvrx9sC3/nhbeEe48A4iFMOlIM45UA5iFMOlIM45UA5iFMOlIM45UA5iFMOlIM45UA5iFMOlIM45UA5iFMOlIM45UA5iFMOlIM45UA5iFMOlIM45UA5iFMOlIM45UA5iFMOlIM45UA5iFMOlIM45UA5iFMOlIM45UA5iFMOlIO4n/Evoad/f/5+frpfv997PnubF/916FFuZlFwIq45jvFgGcvy5Fd3YxwHeLyMizWP2Zpx7G39UV//yI0YB3cZx66iMYg+vi/jQDkKODYDCcqxk+GWsSzGsYsRl2Ece2hZxrHfTXda2VbLMg5nHHUdmw2nlW21ZOPwZRjHhkZfxrL4eY5tpJdRIRhXrjn6Sy+jGuPorGUZpbLhmqOQasswjs7S2Si4DOPoabJlGEc38y3DOPpIL6M4dyutWpZR81LD9zmOV3wZTiut0tmovwzjaDL3Mowjb/plGEdSehljcbcS1rKMIS413K0cYKxl1P15jrKfWpHOxnDLWJZ6n89R+VMrTrWMcheklT+14mzLqDWONe/+msds4ajXPVaVu5X17/76R/bS8oojXmqMfbfScrT2NPQyqpxWEgc78SU56RcafRlVxpGTPmzrpV9igmWMPY6tP1Xt5MsYfhzb7SO9jJlUuVtp0f1AtjzhHCeUixLjaH9DWw5nR+1/kFJKjKOLXvtIP89ky6hSjmXp886mj+tV+hnmW0ahcVTYh2XcqHVa6fL3L3eMc181t1rjOKofLcvoMuiayo3jqH3kTLyMWtccn3V501f2YOXDvurym6ysYjkuurz1Tw/80wfc0+W3V1zdceywD8t4rPQ4Nt1HehnnUX0cG+2jZRlnOKFcDDCOjfaRc55lDDOOvvtIZ+NUy6j471YeSx/Xdmdbxkjl6Hh/m3DCZYw3jl7nF9YY44L0xs5/j3d+uTqGHMee/TjtMoY8rVztcNh2eInKRi3HDtenJ1/G2OXYdB+WMcM49rz+OJuxTysbXX/IxsUk4+jYD8u4mmccXfZhGZ9NNY7GfVjGjdnG0bgPZi5H+v5WNr6asBzpfTD/aSVxfysb35q2HOv7YRn3TD6Op9enlvHAy+vH26Nfn8jNjxiaxVMnGgdR859WSDMOTnxBSppyoBzEKQfKQZxyoBzEKQfKQZxyoBzEKQfKQZxyoBzEKQfKQZxyoBzEKQfKQZxyoBzEKQfKQZxyoBzEKQfKQZxyoBzEKQfKQZxyoBzEKQfKQZxyoBzEKQfKQZxyoBzEKQfKQZxycNd/3hYAl4vgB0gAAAAASUVORK5CYII=">
+<title>Coach's Clipboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Barlow+Condensed:wght@600;700&display=swap" rel="stylesheet">
+<style>
+:root{color-scheme:light}
+[hidden]{display:none!important}
+/* Layout: one-column phone app. Header with week + title, three fixed bottom tabs (Squad, Training, Teams),
+   bottom sheets for player detail, import and settings. Pitch-green accent; bib colours only on team cards. */
+:root{
+  --display:'Barlow Condensed','Arial Narrow',system-ui,sans-serif;
+  --body:'Barlow',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --bg:#F1F4EC; --surface:#FFFFFF; --surface2:#E7ECDF; --fg:#16231B; --muted:#586A5E; --line:#D3DAC9;
+  --accent:#17613A; --on-accent:#FFFFFF; --accent-soft:#DCEBDD; --danger:#B3261E; --warn:#B87900;
+  --t0:#D9480F; --t0-on:#FFFFFF; --t1:#1C6DD0; --t1-on:#FFFFFF; --t2:#E3B505; --t2-on:#1A1A12; --t3:#7B3FBF; --t3-on:#FFFFFF;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0E1411; --surface:#16201A; --surface2:#1F2C24; --fg:#E7EEE9; --muted:#95A89B; --line:#2C3B32;
+    --accent:#5CCB8C; --on-accent:#08200F; --accent-soft:#1B3526; --danger:#F0877F; --warn:#E3B04A;
+    --t0:#F07A32; --t0-on:#16120E; --t1:#6AA3F2; --t1-on:#0C1626; --t2:#EBC83F; --t2-on:#1A1A12; --t3:#B38AE8; --t3-on:#170F24;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0E1411; --surface:#16201A; --surface2:#1F2C24; --fg:#E7EEE9; --muted:#95A89B; --line:#2C3B32;
+  --accent:#5CCB8C; --on-accent:#08200F; --accent-soft:#1B3526; --danger:#F0877F; --warn:#E3B04A;
+  --t0:#F07A32; --t0-on:#16120E; --t1:#6AA3F2; --t1-on:#0C1626; --t2:#EBC83F; --t2-on:#1A1A12; --t3:#B38AE8; --t3-on:#170F24;
+  color-scheme: dark;
+}
+*{box-sizing:border-box}
+body{
+  margin:0; background:var(--bg); color:var(--fg);
+  font-family:var(--body); font-size:16px; line-height:1.45;
+  padding-block:calc(14px + env(safe-area-inset-top,0px)) calc(88px + env(safe-area-inset-bottom,0px));
+  padding-left:max(16px,env(safe-area-inset-left,0px));
+  padding-right:max(16px,env(safe-area-inset-right,0px));
+  -webkit-tap-highlight-color:transparent;
+}
+body.lock{overflow:hidden}
+.wrap{max-width:640px;margin:0 auto}
+button,input,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+/* header */
+.top{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;margin-bottom:14px}
+.tt{min-width:0}
+.eyebrow{margin:0 0 2px;font-size:12px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+h1{margin:0;font-family:var(--display);font-weight:700;font-size:40px;line-height:1;text-transform:uppercase;letter-spacing:.01em;text-wrap:balance}
+.tools{display:flex;align-items:center;gap:8px;flex:none}
+.status{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted);white-space:nowrap}
+.status::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--accent)}
+.status.warn::before{background:var(--warn)}
+.ibtn{width:44px;height:44px;display:grid;place-items:center;border:1px solid var(--line);background:var(--surface);border-radius:12px}
+.ibtn svg,.tab svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+
+/* generic */
+.stack{display:flex;flex-direction:column;gap:12px;min-width:0}
+.row{display:flex;flex-wrap:wrap;gap:8px}
+.btn{min-height:44px;padding:0 16px;border-radius:10px;border:1px solid var(--line);background:var(--surface);font-weight:600;font-size:15px}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.btn.danger{color:var(--danger);border-color:var(--danger);background:transparent}
+.btn:disabled{opacity:.45;cursor:default}
+.hint{margin:0;font-size:14px;color:var(--muted)}
+.note{background:var(--accent-soft);border-radius:12px;padding:12px 14px;font-size:15px;display:flex;flex-direction:column;gap:10px}
+.empty{background:var(--surface);border:1px dashed var(--line);border-radius:14px;padding:22px 16px;text-align:center;display:flex;flex-direction:column;gap:12px;align-items:center}
+.empty p{margin:0;color:var(--muted)}
+input[type=text],input[type=date],textarea{width:100%;min-height:44px;padding:8px 12px;border-radius:10px;border:1px solid var(--line);background:var(--surface);font-size:16px}
+textarea{resize:vertical;line-height:1.4}
+.seg{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;background:var(--surface2);border-radius:10px;padding:3px;gap:3px}
+.seg button{min-height:38px;border:0;background:transparent;border-radius:8px;font-weight:600;font-size:14px;color:var(--muted)}
+.seg button[aria-pressed="true"]{background:var(--accent);color:var(--on-accent)}
+.cnt{font-size:14px;color:var(--muted);margin:0}
+
+/* squad list */
+.addrow{display:grid;grid-template-columns:1fr auto auto;gap:8px}
+.addrow input{min-width:0}
+.list{background:var(--surface);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+.prow{width:100%;display:grid;grid-template-columns:40px minmax(0,1fr) auto 38px;align-items:center;gap:12px;padding:10px 14px;min-height:60px;border:0;border-top:1px solid var(--line);background:transparent;text-align:left}
+.list > :first-child{border-top:0}
+.av{width:40px;height:40px;border-radius:50%;background:var(--surface2);display:grid;place-items:center;font-family:var(--display);font-weight:700;font-size:17px;letter-spacing:.03em}
+.pm{display:flex;flex-direction:column;min-width:0}
+.pn{font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ps{font-size:13px;color:var(--muted)}
+.bars{display:flex;align-items:flex-end;gap:2px;height:22px}
+.bars i{display:block;width:4px;border-radius:1px;background:var(--line)}
+.bars i.on{background:var(--accent)}
+.ov{font-family:var(--display);font-weight:700;font-size:24px;text-align:right;font-variant-numeric:tabular-nums}
+
+/* training */
+.focus{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:12px 14px;display:flex;flex-direction:column;gap:2px}
+.lbl{font-size:12px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.ftxt{font-family:var(--display);font-weight:600;font-size:24px;line-height:1.15}
+.daterow{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center}
+.chips{display:flex;gap:6px;overflow-x:auto;padding-bottom:2px}
+.chip{flex:none;min-height:36px;padding:0 12px;border-radius:18px;border:1px solid var(--line);background:var(--surface);font-size:14px;font-variant-numeric:tabular-nums}
+.chip[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.counter{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.counter b{font-family:var(--display);font-size:34px;font-weight:700;line-height:1;font-variant-numeric:tabular-nums}
+.counter span{color:var(--muted)}
+.arow{width:100%;display:grid;grid-template-columns:32px minmax(0,1fr);align-items:center;gap:12px;padding:10px 14px;min-height:56px;border:0;border-top:1px solid var(--line);background:transparent;text-align:left;font-weight:500}
+.box{width:28px;height:28px;border-radius:8px;border:2px solid var(--line);display:grid;place-items:center}
+.box svg{width:18px;height:18px;fill:none;stroke:var(--on-accent);stroke-width:3;stroke-linecap:round;stroke-linejoin:round;opacity:0}
+.arow.on{background:var(--accent-soft)}
+.arow.on .box{background:var(--accent);border-color:var(--accent)}
+.arow.on .box svg{opacity:1}
+
+/* teams */
+.controls{display:flex;flex-direction:column;gap:8px}
+.teams{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr))}
+.team{background:var(--surface);border:1px solid var(--line);border-radius:14px;overflow:hidden;min-width:0}
+.team-h{background:var(--tc);color:var(--tc-on);padding:10px 14px;display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.team-h b{font-family:var(--display);font-weight:700;font-size:26px;text-transform:uppercase;line-height:1.1}
+.team-h span{font-size:14px;font-weight:600;font-variant-numeric:tabular-nums}
+.tp{width:100%;display:flex;justify-content:space-between;align-items:center;gap:8px;min-height:48px;padding:8px 14px;border:0;border-top:1px solid var(--line);background:transparent;text-align:left}
+.team-h + .tp{border-top:0}
+.tp .tr{font-family:var(--display);font-weight:700;font-size:20px;color:var(--muted);font-variant-numeric:tabular-nums}
+
+/* sheets */
+#sheet-root{position:fixed;inset:0;z-index:50}
+.scrim{position:absolute;inset:0;background:rgba(8,16,11,.55)}
+.panel{position:absolute;left:0;right:0;bottom:0;max-width:640px;margin:0 auto;max-height:92%;display:flex;flex-direction:column;background:var(--bg);border-radius:18px 18px 0 0;border:1px solid var(--line);border-bottom:0;animation:up .22s ease-out}
+@keyframes up{from{transform:translateY(24px);opacity:0}to{transform:none;opacity:1}}
+.phead{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:12px max(16px,env(safe-area-inset-right,0px)) 6px max(16px,env(safe-area-inset-left,0px))}
+.phead h2{margin:0;font-family:var(--display);font-weight:700;font-size:28px;text-transform:uppercase;line-height:1.1}
+.x{width:44px;height:44px;border:0;background:transparent;font-size:30px;line-height:1;color:var(--muted)}
+.pbody{overflow:auto;overscroll-behavior:contain;display:flex;flex-direction:column;gap:14px;padding:4px max(16px,env(safe-area-inset-right,0px)) calc(24px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px))}
+.skill{display:flex;flex-direction:column;gap:6px}
+.sk-l{font-weight:600;font-size:15px}
+.rbs{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
+.rb{min-height:44px;border-radius:10px;border:1px solid var(--line);background:var(--surface);font-family:var(--display);font-weight:700;font-size:20px}
+.rb[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.ovline{display:flex;align-items:baseline;justify-content:space-between;gap:8px;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 14px}
+.ovbig{font-family:var(--display);font-weight:700;font-size:34px;line-height:1;font-variant-numeric:tabular-nums}
+.field{display:flex;flex-direction:column;gap:6px}
+
+/* tabs */
+.tabs{position:fixed;left:0;right:0;bottom:0;z-index:20;background:var(--surface);border-top:1px solid var(--line);
+  padding:6px max(16px,env(safe-area-inset-right,0px)) calc(6px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px))}
+.tabin{max-width:640px;margin:0 auto;display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.tab{min-height:56px;border:0;background:transparent;border-radius:10px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;color:var(--muted);font-size:12px;font-weight:600;letter-spacing:.04em}
+.tab[aria-current="page"]{color:var(--accent);background:var(--accent-soft)}
+
+@media (prefers-reduced-motion: reduce){.panel{animation:none}}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header class="top">
+    <div class="tt"><p class="eyebrow" id="wk"></p><h1 id="ttl">Squad</h1></div>
+    <div class="tools">
+      <span class="status" id="status">Saved on this phone</span>
+      <button class="ibtn" id="settings" type="button" aria-label="Settings">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h9M19 7h1M4 12h3M13 12h7M4 17h11M21 17h-1"/><circle cx="16" cy="7" r="2.2"/><circle cx="10" cy="12" r="2.2"/><circle cx="18" cy="17" r="2.2"/></svg>
+      </button>
+    </div>
+  </header>
+  <main id="view"></main>
+</div>
+
+<nav class="tabs" aria-label="Sections"><div class="tabin">
+  <button class="tab" type="button" data-tab="squad"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3.2"/><path d="M3 19c0-3.3 2.7-5.5 6-5.5s6 2.2 6 5.5"/><circle cx="17" cy="9" r="2.5"/><path d="M16.5 14c2.6.1 4.5 1.9 4.5 4.5"/></svg>Squad</button>
+  <button class="tab" type="button" data-tab="train"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4V3h6v1M9 13l2 2 4-4"/></svg>Training</button>
+  <button class="tab" type="button" data-tab="teams"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="12" r="6"/><circle cx="15" cy="12" r="6"/></svg>Teams</button>
+</div></nav>
+
+<div id="sheet-root" hidden></div>
+
+<script>
+(function(){
+'use strict';
+
+var LS='coachs-clipboard-v1';
+var SKILLS=[['handling','Handling'],['tackle','Contact & tackle'],['ruck','Ruck'],['kicking','Kicking'],['defence','Defence'],['aware','Game awareness']];
+var BIBS=['Orange','Blue','Yellow','Purple'];
+var TOTAL_WEEKS=30;
+/* Same phases and weekly focus rotation as the Weekly Planner tab in the season workbook. */
+var PLAN=[
+  ['Pre-Season',1,4,['Fitness base & running mechanics','Passing & catching fundamentals','Contact confidence (tackle technique)','Ball presentation & support play']],
+  ['Early Season',5,12,['Tackle technique (chop/dominant)','Passing under pressure','Ruck arrival & body position','Alignment & running lines','Kick-pass & chase','Defensive line speed','Handling in contact (offload)','Set piece basics (scrum/lineout)']],
+  ['Mid-Season',13,22,['Decision-making: pass/carry/kick','Breakdown speed & jackal','Attacking shape & width','Defensive systems (drift/blitz)','Set piece variations','Game management & territory','Support lines & continuity','Counter-attack','Discipline & game awareness','Fitness & conditioning top-up']],
+  ['Late Season',23,27,['Team patterns & structure','Tactical kicking','Closing out tight games','Set piece precision','Unit combinations']],
+  ['Finals / Peak',28,30,['Freshness & tapering','Mental preparation','Set piece execution','Game plan clarity']]
+];
+var TITLES={squad:'Squad',train:'Training',teams:'Teams'};
+var CHECK='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
+
+/* ---------- helpers ---------- */
+function $(id){return document.getElementById(id);}
+function h(tag,props){
+  var e=document.createElement(tag);
+  props=props||{};
+  for(var k in props){
+    var v=props[k];
+    if(k==='class')e.className=v;
+    else if(k==='text')e.textContent=v;
+    else if(k==='html')e.innerHTML=v;
+    else if(k.slice(0,2)==='on')e.addEventListener(k.slice(2),v);
+    else if(v===true)e.setAttribute(k,'');
+    else if(v!==false&&v!=null)e.setAttribute(k,v);
+  }
+  var kids=[].slice.call(arguments,2);
+  [].concat.apply([],kids).forEach(function(c){
+    if(c==null||c===false)return;
+    e.append(c.nodeType?c:document.createTextNode(c));
+  });
+  return e;
+}
+function btn(t,fn,cls){return h('button',{type:'button','class':'btn '+(cls||''),onclick:fn},t);}
+function pad(n){return String(n).padStart(2,'0');}
+function ymd(d){return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());}
+function parseYmd(s){var m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(s||'');return m?new Date(+m[1],+m[2]-1,+m[3]):null;}
+function dayDiff(a,b){return Math.round((Date.UTC(a.getFullYear(),a.getMonth(),a.getDate())-Date.UTC(b.getFullYear(),b.getMonth(),b.getDate()))/864e5);}
+function uid(){return 'p'+Math.random().toString(36).slice(2,9);}
+function initials(n){var w=(n||'?').trim().split(/\s+/);return ((w[0]||'?')[0]+(w.length>1?w[w.length-1][0]:'')).toUpperCase();}
+function shuffle(a){a=a.slice();for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=a[i];a[i]=a[j];a[j]=t;}return a;}
+
+/* ---------- state ---------- */
+function exampleState(){
+  var names=['Aoife','Cian','Niamh','Seán','Fionn','Saoirse','Oisín','Ciara','Darragh','Aisling','Conor','Éabha','Liam','Róisín','Tadhg','Sophie'];
+  var players=names.map(function(n,i){
+    var r={};SKILLS.forEach(function(s,j){r[s[0]]=((i*7+j*3+(i>>1))%5)+1;});
+    return {id:'ex'+i,name:n,r:r,note:''};
+  });
+  var sessions={},today=new Date();
+  [0,7,14].forEach(function(back,s){
+    var d=new Date(today);d.setDate(d.getDate()-back);
+    sessions[ymd(d)]=players.filter(function(p,i){return (i*5+s*3)%7!==0;}).map(function(p){return p.id;});
+  });
+  return {v:1,updated:0,examples:true,seasonStart:'2026-09-07',players:players,sessions:sessions,teams:null};
+}
+function normalize(d){
+  return {
+    v:1,updated:+d.updated||0,examples:!!d.examples,seasonStart:d.seasonStart||'2026-09-07',
+    players:Array.isArray(d.players)?d.players.map(function(p){return {id:String(p.id),name:String(p.name||''),r:Object.assign({},p.r),note:String(p.note||'')};}):[],
+    sessions:(d.sessions&&typeof d.sessions==='object')?d.sessions:{},
+    teams:d.teams||null
+  };
+}
+function loadLocal(){try{var s=localStorage.getItem(LS);return s?normalize(JSON.parse(s)):null;}catch(e){return null;}}
+var state=loadLocal()||exampleState();
+var ui={tab:'squad',sort:'name',date:ymd(new Date())};
+(function(){var t=location.hash.slice(1);if(TITLES[t])ui.tab=t;})();
+
+/* ---------- saving: this phone always, account when available ---------- */
+var sync={status:'local',ref:null,busy:false,pending:false,timer:null};
+function persist(){
+  state.updated=Date.now();
+  try{localStorage.setItem(LS,JSON.stringify(state));}catch(e){}
+  queueRemote();
+  renderStatus();
+}
+function queueRemote(){
+  if(!sync.ref)return;
+  sync.status='saving';
+  clearTimeout(sync.timer);
+  sync.timer=setTimeout(flush,700);
+}
+function flush(){
+  if(sync.busy){sync.pending=true;return;}
+  sync.busy=true;
+  Promise.resolve().then(function(){return sync.ref.set(JSON.parse(JSON.stringify(state)));})
+    .then(function(){sync.status='saved';})
+    .catch(function(){sync.status='local';})
+    .then(function(){
+      sync.busy=false;
+      if(sync.pending){sync.pending=false;queueRemote();}
+      renderStatus();
+    });
+}
+function renderStatus(){
+  var s=$('status');if(!s)return;
+  var map={saved:['Saved',false],saving:['Saving…',false],local:['Saved on this phone',false]};
+  var m=map[sync.status]||map.local;
+  s.textContent=m[0];s.className='status'+(m[1]?' warn':'');
+}
+function initRemote(){
+  if(!(window.claude&&window.claude.use))return;
+  Promise.all([window.claude.use('db'),window.claude.use('user')]).then(function(r){
+    var db=r[0],user=r[1];
+    if(!db||!user)return null;
+    return user.id().then(function(id){
+      if(!id)return null;
+      sync.ref=db.doc('data/users/'+id+'/squad');
+      sync.ref.onSnapshot(function(snap){
+        if(snap.metadata.hasPendingWrites)return;
+        var d=snap.exists?snap.data():null;
+        var remoteAt=d&&typeof d.updated==='number'?d.updated:0;
+        if(d&&remoteAt>state.updated){
+          state=normalize(d);
+          try{localStorage.setItem(LS,JSON.stringify(state));}catch(e){}
+          sync.status='saved';
+          renderAll();
+        }else if(state.updated>remoteAt){
+          queueRemote();
+        }else{
+          sync.status='saved';
+        }
+        renderStatus();
+      },function(){sync.status='local';renderStatus();});
+    });
+  }).catch(function(){});
+}
+
+/* ---------- derived data ---------- */
+function overall(p){
+  var v=SKILLS.map(function(s){return p.r[s[0]]||0;}).filter(function(x){return x>0;});
+  return v.length?v.reduce(function(a,b){return a+b;},0)/v.length:0;
+}
+function fmt(x){return x?x.toFixed(1):'–';}
+function score(p){return overall(p)||3;}
+function att(p){
+  var ks=Object.keys(state.sessions);
+  return {c:ks.filter(function(k){return state.sessions[k].indexOf(p.id)>=0;}).length,n:ks.length};
+}
+function weekInfo(){
+  var s=parseYmd(state.seasonStart);if(!s)return null;
+  var diff=dayDiff(new Date(),s),wk=Math.floor(diff/7)+1;
+  if(wk<1){var n=-diff;return {label:'Season starts in '+n+(n===1?' day':' days')};}
+  if(wk>TOTAL_WEEKS)return {label:'Season complete'};
+  var ph=PLAN.filter(function(p){return wk>=p[1]&&wk<=p[2];})[0];
+  return {wk:wk,phase:ph[0],focus:ph[3][(wk-ph[1])%ph[3].length],label:'Week '+wk+' of '+TOTAL_WEEKS+' · '+ph[0]};
+}
+function presentIds(){
+  var set=state.sessions[ui.date]||[];
+  return state.players.filter(function(p){return set.indexOf(p.id)>=0;}).map(function(p){return p.id;});
+}
+function wipeExamples(){state.players=[];state.sessions={};state.teams=null;state.examples=false;}
+function byId(id){return state.players.filter(function(p){return p.id===id;})[0];}
+
+/* ---------- teams ---------- */
+function makeTeams(ids,n,mode){
+  var assign={};
+  if(mode==='random'){shuffle(ids).forEach(function(id,i){assign[id]=i%n;});return assign;}
+  var cap=Math.ceil(ids.length/n),sums=[],cnt=[],t;
+  for(t=0;t<n;t++){sums.push(0);cnt.push(0);}
+  ids.map(function(id){var s=score(byId(id));return {id:id,s:s,j:s+(Math.random()-0.5)*0.8};})
+    .sort(function(a,b){return b.j-a.j;})
+    .forEach(function(p){
+      var best=-1;
+      for(t=0;t<n;t++){
+        if(cnt[t]>=cap)continue;
+        if(best<0||sums[t]<sums[best]-1e-9||(Math.abs(sums[t]-sums[best])<1e-9&&Math.random()<0.5))best=t;
+      }
+      assign[p.id]=best;sums[best]+=p.s;cnt[best]++;
+    });
+  return assign;
+}
+function teamKey(ids,n){return ids.slice().sort().join(',')+'|'+n;}
+function ensureTeams(ids){
+  if(!state.teams)state.teams={n:2,mode:'balanced',key:'',assign:{}};
+  var t=state.teams;
+  if(t.n>ids.length)t.n=Math.max(2,Math.min(4,ids.length));
+  var key=teamKey(ids,t.n);
+  if(t.key!==key){t.assign=makeTeams(ids,t.n,t.mode);t.key=key;persist();}
+  return t;
+}
+function reshuffle(ids){var t=state.teams;t.assign=makeTeams(ids,t.n,t.mode);t.key=teamKey(ids,t.n);persist();renderAll();}
+
+/* ---------- ui bits ---------- */
+function seg(opts,cur,onPick,label){
+  return h('div',{'class':'seg',role:'group','aria-label':label},opts.map(function(o){
+    return h('button',{type:'button','aria-pressed':String(o[0]===cur),onclick:function(){onPick(o[0]);}},o[1]);
+  }));
+}
+function flash(b,msg){var o=b.textContent;b.textContent=msg;setTimeout(function(){b.textContent=o;},1400);}
+function copyText(text,b){
+  var p=(navigator.clipboard&&navigator.clipboard.writeText)?navigator.clipboard.writeText(text):Promise.reject();
+  p.then(function(){flash(b,'Copied');},function(){showCopy(text);});
+}
+function showCopy(text){
+  var ta=h('textarea',{rows:'10',readonly:true,id:'copy-text'});ta.value=text;
+  openSheet('Copy text',h('div',{'class':'stack'},h('p',{'class':'hint',text:'Select all, then copy.'}),ta));
+  ta.focus();ta.select();
+}
+
+var sheetClose=null;
+function openSheet(title,content,onClose){
+  closeSheet();
+  var root=$('sheet-root');
+  var panel=h('div',{'class':'panel',role:'dialog','aria-modal':'true','aria-label':title},
+    h('div',{'class':'phead'},h('h2',{text:title}),h('button',{'class':'x',type:'button','aria-label':'Close',onclick:closeSheet},'×')),
+    h('div',{'class':'pbody'},content));
+  root.replaceChildren(h('div',{'class':'scrim',onclick:closeSheet}),panel);
+  root.hidden=false;document.body.classList.add('lock');
+  sheetClose=function(){
+    root.hidden=true;root.replaceChildren();document.body.classList.remove('lock');
+    sheetClose=null;if(onClose)onClose();
+  };
+}
+function closeSheet(){if(sheetClose)sheetClose();}
+document.addEventListener('keydown',function(e){if(e.key==='Escape')closeSheet();});
+
+/* ---------- squad view ---------- */
+function viewSquad(){
+  var box=h('div',{'class':'stack'});
+  if(state.examples){
+    box.append(h('div',{'class':'note'},
+      h('div',null,h('strong',{text:'Example squad. '}),'These 16 players are samples so you can try the app. Import your own squad, or clear them to start fresh.'),
+      h('div',{'class':'row'},btn('Import my squad',openImport,'primary'),btn('Clear examples',function(){wipeExamples();persist();renderAll();}))));
+  }
+  var inp=h('input',{id:'add-name',type:'text',placeholder:'Add a player',autocomplete:'off',autocapitalize:'words',enterkeyhint:'done','aria-label':'New player name'});
+  function doAdd(){
+    var n=inp.value.trim();if(!n)return;
+    if(state.examples)wipeExamples();
+    state.players.push({id:uid(),name:n,r:{},note:''});
+    persist();renderAll();
+    var i=$('add-name');if(i)i.focus();
+  }
+  inp.addEventListener('keydown',function(e){if(e.key==='Enter'){e.preventDefault();doAdd();}});
+  box.append(h('div',{'class':'addrow'},inp,btn('Add',doAdd,'primary'),btn('Import',openImport)));
+
+  if(!state.players.length){
+    box.append(h('div',{'class':'empty'},h('p',{text:'No players yet. Type a name above, or import a list from a spreadsheet.'}),btn('Import a list',openImport,'primary')));
+    return box;
+  }
+  box.append(seg([['name','Name'],['rating','Rating'],['att','Attendance']],ui.sort,function(v){ui.sort=v;renderAll();},'Sort players'));
+  var ps=state.players.slice();
+  if(ui.sort==='name')ps.sort(function(a,b){return a.name.localeCompare(b.name);});
+  else if(ui.sort==='rating')ps.sort(function(a,b){return overall(b)-overall(a)||a.name.localeCompare(b.name);});
+  else ps.sort(function(a,b){var x=att(a),y=att(b);return (y.n?y.c/y.n:0)-(x.n?x.c/x.n:0)||a.name.localeCompare(b.name);});
+  box.append(h('p',{'class':'cnt',text:ps.length+(ps.length===1?' player':' players')}));
+  box.append(h('div',{'class':'list'},ps.map(playerRow)));
+  return box;
+}
+function playerRow(p){
+  var a=att(p),o=overall(p);
+  var bars=h('span',{'class':'bars','aria-hidden':'true'},SKILLS.map(function(s){
+    var v=p.r[s[0]]||0;
+    return h('i',{'class':v?'on':'',style:'height:'+(v?4+v*3.6:3)+'px'});
+  }));
+  return h('button',{'class':'prow',type:'button',onclick:function(){openPlayer(p.id);}},
+    h('span',{'class':'av','aria-hidden':'true',text:initials(p.name)}),
+    h('span',{'class':'pm'},h('span',{'class':'pn',text:p.name||'Unnamed'}),h('span',{'class':'ps',text:a.n?('Trained '+a.c+' of '+a.n):'No sessions logged'})),
+    bars,
+    h('span',{'class':'ov',text:fmt(o)}));
+}
+
+/* ---------- player sheet ---------- */
+function openPlayer(id){
+  var p0=byId(id);if(!p0)return;
+  function P(){return byId(id)||p0;}
+  var name=h('input',{id:'pl-name',type:'text',value:p0.name,autocomplete:'off','aria-label':'Player name',
+    oninput:function(e){P().name=e.target.value;persist();}});
+  var ov=h('span',{'class':'ovbig',text:fmt(overall(p0))});
+  var rows=SKILLS.map(function(s){
+    var k=s[0],label=s[1],btns;
+    function paint(){
+      btns.forEach(function(b,i){b.setAttribute('aria-pressed',String((P().r[k]||0)===i+1));});
+      ov.textContent=fmt(overall(P()));
+    }
+    btns=[1,2,3,4,5].map(function(v){
+      return h('button',{'class':'rb',type:'button','aria-label':label+' '+v,'aria-pressed':String((p0.r[k]||0)===v),
+        onclick:function(){var q=P();q.r[k]=(q.r[k]===v)?0:v;persist();paint();}},String(v));
+    });
+    return h('div',{'class':'skill'},h('div',{'class':'sk-l',text:label}),h('div',{'class':'rbs',role:'group','aria-label':label+' rating'},btns));
+  });
+  var a=att(p0);
+  var notes=h('textarea',{id:'pl-note',rows:'3',placeholder:'Anything to remember, e.g. new this term, shy on contact, great kicker',
+    oninput:function(e){P().note=e.target.value;persist();}});
+  notes.value=p0.note||'';
+  var del=h('button',{'class':'btn danger',type:'button'},'Remove player');
+  del.addEventListener('click',function(){
+    if(!del.dataset.arm){del.dataset.arm='1';del.textContent='Tap again to remove';return;}
+    state.players=state.players.filter(function(x){return x.id!==id;});
+    Object.keys(state.sessions).forEach(function(k){
+      state.sessions[k]=state.sessions[k].filter(function(x){return x!==id;});
+      if(!state.sessions[k].length)delete state.sessions[k];
+    });
+    if(state.teams)state.teams.key='';
+    persist();closeSheet();
+  });
+  openSheet('Player',h('div',{'class':'stack'},
+    h('div',{'class':'field'},h('label',{'for':'pl-name','class':'lbl',text:'Name'}),name),
+    h('div',{'class':'ovline'},h('span',{'class':'lbl',text:'Overall'}),ov),
+    h('p',{'class':'hint',text:'Rate 1 (developing) to 5 (excelling). Tap a selected number again to clear it.'}),
+    rows,
+    h('p',{'class':'hint',text:a.n?('Attended '+a.c+' of '+a.n+' logged sessions ('+Math.round(100*a.c/a.n)+'%).'):'No sessions logged yet.'}),
+    h('div',{'class':'field'},h('label',{'for':'pl-note','class':'lbl',text:'Notes'}),notes),
+    del),function(){renderAll();});
+}
+
+/* ---------- training view ---------- */
+function viewTrain(){
+  var box=h('div',{'class':'stack'});
+  var wi=weekInfo();
+  if(wi&&wi.focus)box.append(h('div',{'class':'focus'},h('span',{'class':'lbl',text:'This week’s focus'}),h('span',{'class':'ftxt',text:wi.focus})));
+  var today=ymd(new Date());
+  var di=h('input',{id:'sess-date',type:'date',value:ui.date,'aria-label':'Session date',
+    onchange:function(e){if(parseYmd(e.target.value)){ui.date=e.target.value;renderAll();}}});
+  box.append(h('div',{'class':'daterow'},di,ui.date!==today?btn('Today',function(){ui.date=today;renderAll();}):null));
+
+  var keys=Object.keys(state.sessions).sort().reverse().slice(0,6);
+  if(keys.length){
+    box.append(h('div',{'class':'chips',role:'group','aria-label':'Recent sessions'},keys.map(function(k){
+      var d=parseYmd(k);
+      return h('button',{'class':'chip',type:'button','aria-pressed':String(k===ui.date),
+        onclick:function(){ui.date=k;renderAll();}},d.toLocaleDateString(undefined,{day:'numeric',month:'short'})+' · '+state.sessions[k].length);
+    })));
+  }
+  if(!state.players.length){
+    box.append(h('div',{'class':'empty'},h('p',{text:'Add your squad first, then tick who turns up each session.'}),btn('Go to squad',function(){gotoTab('squad');},'primary')));
+    return box;
+  }
+  var present=state.sessions[ui.date]||[];
+  box.append(h('div',{'class':'counter'},
+    h('div',null,h('b',{text:present.length}),h('span',{text:' of '+state.players.length+' here'})),
+    h('div',{'class':'row'},btn('All',function(){setSession(state.players.map(function(p){return p.id;}));}),btn('None',function(){setSession([]);}))));
+  var ps=state.players.slice().sort(function(a,b){return a.name.localeCompare(b.name);});
+  box.append(h('div',{'class':'list'},ps.map(function(p){
+    var on=present.indexOf(p.id)>=0;
+    return h('button',{'class':'arow'+(on?' on':''),type:'button',role:'checkbox','aria-checked':String(on),
+      onclick:function(){
+        var s=(state.sessions[ui.date]||[]).slice(),i=s.indexOf(p.id);
+        if(i>=0)s.splice(i,1);else s.push(p.id);
+        setSession(s);
+      }},h('span',{'class':'box',html:CHECK}),h('span',{text:p.name||'Unnamed'}));
+  })));
+  var go=btn('Pick teams from these '+present.length,function(){gotoTab('teams');},'primary');
+  if(present.length<2)go.disabled=true;
+  box.append(go);
+  return box;
+}
+function setSession(arr){
+  if(arr.length)state.sessions[ui.date]=arr;else delete state.sessions[ui.date];
+  persist();renderAll();
+}
+
+/* ---------- teams view ---------- */
+function viewTeams(){
+  var box=h('div',{'class':'stack'});
+  var ids=presentIds();
+  if(ids.length<2){
+    box.append(h('div',{'class':'empty'},
+      h('p',{text:'Tick at least two players on the Training tab, then come back to split them into teams.'}),
+      btn('Go to training',function(){gotoTab('train');},'primary')));
+    return box;
+  }
+  var t=ensureTeams(ids);
+  var maxN=Math.min(4,ids.length),opts=[];
+  for(var n=2;n<=maxN;n++)opts.push([n,n+' teams']);
+  box.append(h('div',{'class':'controls'},
+    seg(opts,t.n,function(v){t.n=v;t.key='';ensureTeams(ids);renderAll();},'Number of teams'),
+    seg([['balanced','Balanced'],['random','Random']],t.mode,function(v){t.mode=v;t.key='';ensureTeams(ids);renderAll();},'Split mode'),
+    btn('Shuffle again',function(){reshuffle(ids);},'primary')));
+
+  var groups=[];for(var i=0;i<t.n;i++)groups.push([]);
+  ids.forEach(function(id){var g=t.assign[id];if(!(g>=0&&g<t.n))g=0;groups[g].push(byId(id));});
+  groups.forEach(function(g){g.sort(function(a,b){return score(b)-score(a)||a.name.localeCompare(b.name);});});
+
+  box.append(h('div',{'class':'teams'},groups.map(function(g,i){
+    var avg=g.length?g.reduce(function(s,p){return s+score(p);},0)/g.length:0;
+    return h('section',{'class':'team',style:'--tc:var(--t'+i+');--tc-on:var(--t'+i+'-on)','aria-label':BIBS[i]+' bibs'},
+      h('div',{'class':'team-h'},h('b',{text:BIBS[i]+' bibs'}),h('span',{text:g.length+' players · avg '+avg.toFixed(1)})),
+      g.map(function(p){
+        var next=(i+1)%t.n;
+        return h('button',{'class':'tp',type:'button','aria-label':'Move '+p.name+' to '+BIBS[next]+' bibs',
+          onclick:function(){t.assign[p.id]=next;persist();renderAll();}},
+          h('span',{text:p.name||'Unnamed'}),h('span',{'class':'tr',text:fmt(overall(p))}));
+      }));
+  })));
+  box.append(h('p',{'class':'hint',text:'Tap a player to move them to the next team. Unrated players count as 3 when balancing.'}));
+  var cp=btn('Copy teams as text',function(){
+    var d=parseYmd(ui.date);
+    var head='Teams for '+(d?d.toLocaleDateString(undefined,{weekday:'long',day:'numeric',month:'short'}):ui.date);
+    copyText(head+'\n'+groups.map(function(g,i){return BIBS[i]+' bibs ('+g.length+'): '+g.map(function(p){return p.name;}).join(', ');}).join('\n'),cp);
+  });
+  box.append(cp);
+  return box;
+}
+
+/* ---------- import / settings ---------- */
+function parseTable(text){
+  var delim=text.indexOf('\t')>=0?'\t':',',rows=[],row=[],cell='',q=false;
+  for(var i=0;i<text.length;i++){
+    var c=text[i];
+    if(q){if(c==='"'){if(text[i+1]==='"'){cell+='"';i++;}else q=false;}else cell+=c;}
+    else if(c==='"'&&cell==='')q=true;
+    else if(c===delim){row.push(cell);cell='';}
+    else if(c==='\n'||c==='\r'){if(c==='\r'&&text[i+1]==='\n')i++;row.push(cell);cell='';rows.push(row);row=[];}
+    else cell+=c;
+  }
+  row.push(cell);rows.push(row);
+  return rows.map(function(r){return r.map(function(x){return x.trim();});}).filter(function(r){return r.some(function(x){return x;});});
+}
+function parseImport(text){
+  var rows=parseTable(text);if(!rows.length)return [];
+  var first=rows[0].map(function(x){return x.toLowerCase();});
+  var ni=first.findIndex(function(x){return ['name','player','players','first name','player name'].indexOf(x)>=0;});
+  var start=0,map=null,noteI=-1;
+  if(ni>=0){
+    start=1;map={};
+    var alias={handling:'handling',tackle:'tackle',contact:'tackle','contact & tackle':'tackle',ruck:'ruck',kicking:'kicking',defence:'defence',awareness:'aware','game awareness':'aware',aware:'aware'};
+    first.forEach(function(c,i){if(alias[c])map[alias[c]]=i;});
+    noteI=first.indexOf('notes');
+  }else ni=0;
+  var out=[],seen={};
+  for(var i=start;i<rows.length;i++){
+    var r=rows[i],name=(r[ni]||'').trim();
+    if(!name||seen[name.toLowerCase()])continue;
+    seen[name.toLowerCase()]=1;
+    var rr={};
+    if(map)for(var k in map){var v=parseInt(r[map[k]],10);if(v>=1&&v<=5)rr[k]=v;}
+    out.push({name:name,r:rr,note:noteI>=0?(r[noteI]||''):''});
+  }
+  return out;
+}
+function openImport(){
+  var ta=h('textarea',{id:'imp-text',rows:'8',spellcheck:'false',placeholder:'Aoife\nCian\nNiamh\n\nOr paste rows copied from a spreadsheet or CSV'});
+  var info=h('p',{'class':'hint',text:'Nothing to import yet.'});
+  var go=h('button',{'class':'btn primary',type:'button',disabled:true},'Add players');
+  ta.addEventListener('input',function(){
+    var r=parseImport(ta.value);
+    info.textContent=r.length?(r.length+(r.length===1?' player':' players')+' found.'+(state.examples?' The example squad will be replaced.':'')):'Nothing to import yet.';
+    go.disabled=!r.length;go.textContent=r.length?('Add '+r.length+(r.length===1?' player':' players')):'Add players';
+  });
+  go.addEventListener('click',function(){
+    var r=parseImport(ta.value);if(!r.length)return;
+    if(state.examples)wipeExamples();
+    var have={};state.players.forEach(function(p){have[p.name.toLowerCase()]=1;});
+    r.forEach(function(x){
+      if(have[x.name.toLowerCase()])return;
+      have[x.name.toLowerCase()]=1;
+      state.players.push({id:uid(),name:x.name,r:x.r,note:x.note});
+    });
+    persist();closeSheet();
+  });
+  openSheet('Import squad',h('div',{'class':'stack'},
+    h('p',{'class':'hint',text:'Paste one name per line, or rows from a spreadsheet. With no header row, the first column is used as the name. A header row with name, handling, tackle, ruck, kicking, defence, awareness and notes also brings in ratings, so a CSV copied from this app imports back in.'}),
+    ta,info,go),function(){renderAll();});
+  ta.focus();
+}
+function toCSV(){
+  function esc(s){s=String(s==null?'':s);return /[",\n\r]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s;}
+  var lines=[['name'].concat(SKILLS.map(function(s){return s[0];}),['notes','attended','sessions']).join(',')];
+  state.players.forEach(function(p){
+    var a=att(p);
+    lines.push([p.name].concat(SKILLS.map(function(s){return p.r[s[0]]||'';}),[p.note,a.c,a.n]).map(esc).join(','));
+  });
+  return lines.join('\n');
+}
+function openSettings(){
+  var d=h('input',{id:'set-start',type:'date',value:state.seasonStart,'aria-label':'Season start date',
+    onchange:function(e){if(parseYmd(e.target.value)){state.seasonStart=e.target.value;persist();renderAll();}}});
+  var copy=h('button',{'class':'btn',type:'button'},'Copy squad as CSV');
+  copy.addEventListener('click',function(){copyText(toCSV(),copy);});
+  var clr=h('button',{'class':'btn danger',type:'button'},'Clear all players and sessions');
+  clr.addEventListener('click',function(){
+    if(!clr.dataset.arm){clr.dataset.arm='1';clr.textContent='Tap again to clear everything';return;}
+    wipeExamples();persist();closeSheet();
+  });
+  openSheet('Settings',h('div',{'class':'stack'},
+    h('div',{'class':'field'},h('label',{'for':'set-start','class':'lbl',text:'Season start (Monday of week 1)'}),d,
+      h('p',{'class':'hint',text:'Sets the week number and weekly focus, which follow the 30-week plan in the season workbook.'})),
+    h('div',{'class':'field'},h('span',{'class':'lbl',text:'Backup'}),copy,
+      h('p',{'class':'hint',text:'Copies names, ratings, notes and attendance so you can paste them into a spreadsheet.'})),
+    h('p',{'class':'hint',text:'Your squad is stored in this browser on this phone only. Clearing the browser’s site data will erase it, so use Copy squad as CSV now and then as a backup.'}),
+    clr),function(){renderAll();});
+}
+
+/* ---------- shell ---------- */
+function gotoTab(t){
+  if(!TITLES[t])return;
+  ui.tab=t;
+  try{location.hash=t;}catch(e){}
+  renderAll();window.scrollTo(0,0);
+}
+function renderAll(){
+  var wi=weekInfo();
+  $('wk').textContent=wi?wi.label:'';
+  $('ttl').textContent=TITLES[ui.tab];
+  [].forEach.call(document.querySelectorAll('.tab'),function(b){b.setAttribute('aria-current',b.dataset.tab===ui.tab?'page':'false');});
+  var views={squad:viewSquad,train:viewTrain,teams:viewTeams};
+  $('view').replaceChildren(views[ui.tab]());
+  renderStatus();
+}
+[].forEach.call(document.querySelectorAll('.tab'),function(b){b.addEventListener('click',function(){gotoTab(b.dataset.tab);});});
+$('settings').addEventListener('click',openSettings);
+window.addEventListener('hashchange',function(){
+  var t=location.hash.slice(1);
+  if(TITLES[t]&&t!==ui.tab){ui.tab=t;renderAll();window.scrollTo(0,0);}
+});
+
+renderAll();
+})();
+</script>
+
+</body>
+</html>
