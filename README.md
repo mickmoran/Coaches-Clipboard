@@ -1,6 +1,6 @@
 # Coach's Clipboard
 
-A phone-friendly app for youth rugby coaches: squad ratings, training attendance and balanced team picking, matched to a 30-week season plan.
+A phone-friendly app for youth rugby coaches: squad ratings, training attendance and match team selection, matched to a 30-week season plan.
 
 It is a single file, `index.html`, with no build step. Everything is stored in the browser on the device using it. Nothing is sent anywhere.
 

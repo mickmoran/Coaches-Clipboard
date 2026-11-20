@@ -175,7 +175,7 @@ textarea{resize:vertical;line-height:1.4}
 <nav class="tabs" aria-label="Sections"><div class="tabin">
   <button class="tab" type="button" data-tab="squad"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3.2"/><path d="M3 19c0-3.3 2.7-5.5 6-5.5s6 2.2 6 5.5"/><circle cx="17" cy="9" r="2.5"/><path d="M16.5 14c2.6.1 4.5 1.9 4.5 4.5"/></svg>Squad</button>
   <button class="tab" type="button" data-tab="train"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4V3h6v1M9 13l2 2 4-4"/></svg>Training</button>
-  <button class="tab" type="button" data-tab="teams"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="12" r="6"/><circle cx="15" cy="12" r="6"/></svg>Teams</button>
+  <button class="tab" type="button" data-tab="match"><svg viewBox="0 0 24 24" aria-hidden="true"><ellipse cx="12" cy="12" rx="9.5" ry="5.8" transform="rotate(-40 12 12)"/><path d="M8.5 15.5l7-7M11 10.5l2 2M9.5 12l2 2M12.5 9l2 2"/></svg>Match</button>
 </div></nav>
 
 <div id="sheet-root" hidden></div>
@@ -186,7 +186,6 @@ textarea{resize:vertical;line-height:1.4}
 
 var LS='coachs-clipboard-v1';
 var SKILLS=[['handling','Handling'],['tackle','Contact & tackle'],['ruck','Ruck'],['kicking','Kicking'],['defence','Defence'],['aware','Game awareness']];
-var BIBS=['Orange','Blue','Yellow','Purple'];
 var TOTAL_WEEKS=30;
 /* Same phases and weekly focus rotation as the Weekly Planner tab in the season workbook. */
 var PLAN=[
@@ -196,7 +195,7 @@ var PLAN=[
   ['Late Season',23,27,['Team patterns & structure','Tactical kicking','Closing out tight games','Set piece precision','Unit combinations']],
   ['Finals / Peak',28,30,['Freshness & tapering','Mental preparation','Set piece execution','Game plan clarity']]
 ];
-var TITLES={squad:'Squad',train:'Training',teams:'Teams'};
+var TITLES={squad:'Squad',train:'Training',match:'Match'};
 var CHECK='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
 
 /* ---------- helpers ---------- */
@@ -241,20 +240,32 @@ function exampleState(){
     var d=new Date(today);d.setDate(d.getDate()-back);
     sessions[ymd(d)]=players.filter(function(p,i){return (i*5+s*3)%7!==0;}).map(function(p){return p.id;});
   });
-  return {v:1,updated:0,lastBackup:0,examples:true,seasonStart:'2026-09-07',players:players,sessions:sessions,teams:null};
+  var matches={};
+  matches[ymd(today)]={opp:'Example Rovers',avail:players.slice(0,14).map(function(p){return p.id;}),n:2,mode:'balanced',key:'',assign:{}};
+  return {v:1,updated:0,lastBackup:0,examples:true,seasonStart:'2026-09-07',players:players,sessions:sessions,matches:matches};
+}
+function cleanMatches(src){
+  var out={};
+  if(!src||typeof src!=='object')return out;
+  Object.keys(src).forEach(function(k){
+    var m=src[k];if(!m||typeof m!=='object')return;
+    out[k]={opp:String(m.opp||''),avail:Array.isArray(m.avail)?m.avail.map(String):[],n:Math.min(4,Math.max(1,+m.n||2)),
+      mode:['balanced','ability','random'].indexOf(m.mode)>=0?m.mode:'balanced',key:String(m.key||''),assign:Object.assign({},m.assign)};
+  });
+  return out;
 }
 function normalize(d){
   return {
     v:1,updated:+d.updated||0,lastBackup:+d.lastBackup||0,examples:!!d.examples,seasonStart:d.seasonStart||'2026-09-07',
     players:Array.isArray(d.players)?d.players.map(function(p){return {id:String(p.id),name:String(p.name||''),r:Object.assign({},p.r),note:String(p.note||'')};}):[],
     sessions:(d.sessions&&typeof d.sessions==='object')?d.sessions:{},
-    teams:d.teams||null
+    matches:cleanMatches(d.matches)
   };
 }
 function loadLocal(){try{var s=localStorage.getItem(LS);return s?normalize(JSON.parse(s)):null;}catch(e){return null;}}
 var state=loadLocal()||exampleState();
-var ui={tab:'squad',sort:'name',date:ymd(new Date())};
-(function(){var t=location.hash.slice(1);if(TITLES[t])ui.tab=t;})();
+var ui={tab:'squad',sort:'name',date:ymd(new Date()),mdate:ymd(new Date())};
+(function(){var t=location.hash.slice(1);if(t==='teams')t='match';if(TITLES[t])ui.tab=t;})();
 
 /* ---------- saving: this phone always, account when available ---------- */
 var sync={status:'local',ref:null,busy:false,pending:false,timer:null};
@@ -341,14 +352,22 @@ function presentIds(){
   var set=state.sessions[ui.date]||[];
   return state.players.filter(function(p){return set.indexOf(p.id)>=0;}).map(function(p){return p.id;});
 }
-function wipeExamples(){state.players=[];state.sessions={};state.teams=null;state.examples=false;}
+function wipeExamples(){state.players=[];state.sessions={};state.matches={};state.examples=false;}
 function byId(id){return state.players.filter(function(p){return p.id===id;})[0];}
 
-/* ---------- teams ---------- */
+/* ---------- matches ---------- */
+var TEAM_NAMES=['Team A','Team B','Team C','Team D'];
 function makeTeams(ids,n,mode){
-  var assign={};
+  var assign={},t;
+  if(n<=1){ids.forEach(function(id){assign[id]=0;});return assign;}
   if(mode==='random'){shuffle(ids).forEach(function(id,i){assign[id]=i%n;});return assign;}
-  var cap=Math.ceil(ids.length/n),sums=[],cnt=[],t;
+  if(mode==='ability'){
+    var sorted=shuffle(ids).sort(function(a,b){return score(byId(b))-score(byId(a));});
+    var base=Math.floor(sorted.length/n),extra=sorted.length%n,pos=0;
+    for(t=0;t<n;t++){var size=base+(t<extra?1:0);for(var k=0;k<size;k++)assign[sorted[pos++]]=t;}
+    return assign;
+  }
+  var cap=Math.ceil(ids.length/n),sums=[],cnt=[];
   for(t=0;t<n;t++){sums.push(0);cnt.push(0);}
   ids.map(function(id){var s=score(byId(id));return {id:id,s:s,j:s+(Math.random()-0.5)*0.8};})
     .sort(function(a,b){return b.j-a.j;})
@@ -362,16 +381,38 @@ function makeTeams(ids,n,mode){
     });
   return assign;
 }
-function teamKey(ids,n){return ids.slice().sort().join(',')+'|'+n;}
-function ensureTeams(ids){
-  if(!state.teams)state.teams={n:2,mode:'balanced',key:'',assign:{}};
-  var t=state.teams;
-  if(t.n>ids.length)t.n=Math.max(2,Math.min(4,ids.length));
-  var key=teamKey(ids,t.n);
-  if(t.key!==key){t.assign=makeTeams(ids,t.n,t.mode);t.key=key;persist();}
-  return t;
+function matchKey(ids,n){return ids.slice().sort().join(',')+'|'+n;}
+function newMatch(){return {opp:'',avail:[],n:2,mode:'balanced',key:'',assign:{}};}
+function getMatch(){return state.matches[ui.mdate]||(state.matches[ui.mdate]=newMatch());}
+function tidyMatch(){var m=state.matches[ui.mdate];if(m&&!m.avail.length&&!m.opp)delete state.matches[ui.mdate];}
+function availIds(m){return state.players.filter(function(p){return m.avail.indexOf(p.id)>=0;}).map(function(p){return p.id;});}
+function played(p){
+  var today=ymd(new Date());
+  return Object.keys(state.matches).filter(function(k){return k<=today&&state.matches[k].avail.indexOf(p.id)>=0;}).length;
 }
-function reshuffle(ids){var t=state.teams;t.assign=makeTeams(ids,t.n,t.mode);t.key=teamKey(ids,t.n);persist();renderAll();}
+function subText(p,a){
+  var s=a.n?('Trained '+a.c+' of '+a.n):'No sessions logged',pl=played(p);
+  return pl?s+' · Played '+pl:s;
+}
+/* Keeps manual moves when players are added or removed; rebuilds only when the split itself changes. */
+function ensureTeams(m,ids){
+  var t,maxN=Math.max(1,Math.min(4,ids.length));
+  if(m.n>maxN){m.n=maxN;m.key='';}
+  var key=matchKey(ids,m.n);
+  if(m.key===key)return;
+  if(m.key&&m.key.slice(m.key.lastIndexOf('|')+1)===String(m.n)){
+    var cnt=[],next={};
+    for(t=0;t<m.n;t++)cnt.push(0);
+    ids.forEach(function(id){if(m.assign[id]>=0&&m.assign[id]<m.n){next[id]=m.assign[id];cnt[next[id]]++;}});
+    ids.forEach(function(id){
+      if(id in next)return;
+      var best=0;for(t=1;t<m.n;t++)if(cnt[t]<cnt[best])best=t;
+      next[id]=best;cnt[best]++;
+    });
+    m.assign=next;
+  }else m.assign=makeTeams(ids,m.n,m.mode);
+  m.key=key;persist();
+}
 
 /* ---------- ui bits ---------- */
 function seg(opts,cur,onPick,label){
@@ -457,7 +498,7 @@ function playerRow(p){
   }));
   return h('button',{'class':'prow',type:'button',onclick:function(){openPlayer(p.id);}},
     h('span',{'class':'av','aria-hidden':'true',text:initials(p.name)}),
-    h('span',{'class':'pm'},h('span',{'class':'pn',text:p.name||'Unnamed'}),h('span',{'class':'ps',text:a.n?('Trained '+a.c+' of '+a.n):'No sessions logged'})),
+    h('span',{'class':'pm'},h('span',{'class':'pn',text:p.name||'Unnamed'}),h('span',{'class':'ps',text:subText(p,a)})),
     bars,
     h('span',{'class':'ov',text:fmt(o)}));
 }
@@ -493,7 +534,7 @@ function openPlayer(id){
       state.sessions[k]=state.sessions[k].filter(function(x){return x!==id;});
       if(!state.sessions[k].length)delete state.sessions[k];
     });
-    if(state.teams)state.teams.key='';
+    Object.keys(state.matches).forEach(function(k){var m=state.matches[k];m.avail=m.avail.filter(function(x){return x!==id;});delete m.assign[id];});
     persist();closeSheet();
   });
   openSheet('Player',h('div',{'class':'stack'},
@@ -501,7 +542,7 @@ function openPlayer(id){
     h('div',{'class':'ovline'},h('span',{'class':'lbl',text:'Overall'}),ov),
     h('p',{'class':'hint',text:'Rate 1 (developing) to 5 (excelling). Tap a selected number again to clear it.'}),
     rows,
-    h('p',{'class':'hint',text:a.n?('Attended '+a.c+' of '+a.n+' logged sessions ('+Math.round(100*a.c/a.n)+'%).'):'No sessions logged yet.'}),
+    h('p',{'class':'hint',text:(a.n?('Attended '+a.c+' of '+a.n+' logged sessions ('+Math.round(100*a.c/a.n)+'%).'):'No sessions logged yet.')+(played(p0)?' Played '+played(p0)+(played(p0)===1?' match.':' matches.'):'')}),
     h('div',{'class':'field'},h('label',{'for':'pl-note','class':'lbl',text:'Notes'}),notes),
     del),function(){renderAll();});
 }
@@ -542,9 +583,6 @@ function viewTrain(){
         setSession(s);
       }},h('span',{'class':'box',html:CHECK}),h('span',{text:p.name||'Unnamed'}));
   })));
-  var go=btn('Pick teams from these '+present.length,function(){gotoTab('teams');},'primary');
-  if(present.length<2)go.disabled=true;
-  box.append(go);
   return box;
 }
 function setSession(arr){
@@ -552,46 +590,89 @@ function setSession(arr){
   persist();renderAll();
 }
 
-/* ---------- teams view ---------- */
-function viewTeams(){
+/* ---------- match view ---------- */
+function viewMatch(){
   var box=h('div',{'class':'stack'});
-  var ids=presentIds();
-  if(ids.length<2){
-    box.append(h('div',{'class':'empty'},
-      h('p',{text:'Tick at least two players on the Training tab, then come back to split them into teams.'}),
-      btn('Go to training',function(){gotoTab('train');},'primary')));
+  var today=ymd(new Date());
+  var m=state.matches[ui.mdate]||newMatch();
+  box.append(h('div',{'class':'daterow'},
+    h('input',{id:'match-date',type:'date',value:ui.mdate,'aria-label':'Match date',
+      onchange:function(e){if(parseYmd(e.target.value)){ui.mdate=e.target.value;renderAll();}}}),
+    ui.mdate!==today?btn('Today',function(){ui.mdate=today;renderAll();}):null));
+  box.append(h('input',{id:'match-opp',type:'text',placeholder:'Opposition (optional)',autocomplete:'off',autocapitalize:'words','aria-label':'Opposition',value:m.opp||'',
+    oninput:function(e){var mm=getMatch();mm.opp=e.target.value;tidyMatch();persist();}}));
+  var keys=Object.keys(state.matches).sort().reverse().slice(0,6);
+  if(keys.length){
+    box.append(h('div',{'class':'chips',role:'group','aria-label':'Saved matches'},keys.map(function(k){
+      var d=parseYmd(k),mm=state.matches[k];
+      return h('button',{'class':'chip',type:'button','aria-pressed':String(k===ui.mdate),
+        onclick:function(){ui.mdate=k;renderAll();}},d.toLocaleDateString(undefined,{day:'numeric',month:'short'})+(mm.opp?' · '+mm.opp:''));
+    })));
+  }
+  if(!state.players.length){
+    box.append(h('div',{'class':'empty'},h('p',{text:'Add your squad first, then choose who is available for the match.'}),btn('Go to squad',function(){gotoTab('squad');},'primary')));
     return box;
   }
-  var t=ensureTeams(ids);
-  var maxN=Math.min(4,ids.length),opts=[];
-  for(var n=2;n<=maxN;n++)opts.push([n,n+' teams']);
-  box.append(h('div',{'class':'controls'},
-    seg(opts,t.n,function(v){t.n=v;t.key='';ensureTeams(ids);renderAll();},'Number of teams'),
-    seg([['balanced','Balanced'],['random','Random']],t.mode,function(v){t.mode=v;t.key='';ensureTeams(ids);renderAll();},'Split mode'),
-    btn('Shuffle again',function(){reshuffle(ids);},'primary')));
+  function setAvail(arr){var mm=getMatch();mm.avail=arr;tidyMatch();persist();renderAll();}
+  var ses=Object.keys(state.sessions).sort();
+  var lastKey=ses.filter(function(k){return k<=ui.mdate;}).pop()||ses[ses.length-1];
+  var lastBtn=btn('Last training',function(){setAvail(state.sessions[lastKey].slice());});
+  if(!lastKey)lastBtn.disabled=true;
+  box.append(h('div',{'class':'counter'},
+    h('div',null,h('b',{text:m.avail.length}),h('span',{text:' of '+state.players.length+' available'})),
+    h('div',{'class':'row'},btn('All',function(){setAvail(state.players.map(function(p){return p.id;}));}),lastBtn,btn('None',function(){setAvail([]);}))));
 
-  var groups=[];for(var i=0;i<t.n;i++)groups.push([]);
-  ids.forEach(function(id){var g=t.assign[id];if(!(g>=0&&g<t.n))g=0;groups[g].push(byId(id));});
-  groups.forEach(function(g){g.sort(function(a,b){return score(b)-score(a)||a.name.localeCompare(b.name);});});
+  var ids=availIds(m);
+  if(ids.length){
+    ensureTeams(m,ids);
+    var maxN=Math.min(4,ids.length),opts=[];
+    for(var n=1;n<=maxN;n++)opts.push([n,n+(n===1?' team':' teams')]);
+    var hints={balanced:'Teams of equal strength.',ability:'Team A gets the strongest players.',random:'A random split, ignoring ratings.'};
+    box.append(h('div',{'class':'controls'},
+      seg(opts,m.n,function(v){var mm=getMatch();mm.n=v;mm.key='';renderAll();},'Number of teams'),
+      seg([['balanced','Balanced'],['ability','By ability'],['random','Random']],m.mode,function(v){var mm=getMatch();mm.mode=v;mm.key='';renderAll();},'Split mode'),
+      h('p',{'class':'hint',text:hints[m.mode]+' Unrated players count as 3.'}),
+      btn('Shuffle again',function(){var mm=getMatch();mm.assign=makeTeams(ids,mm.n,mm.mode);mm.key=matchKey(ids,mm.n);persist();renderAll();},'primary')));
 
-  box.append(h('div',{'class':'teams'},groups.map(function(g,i){
-    var avg=g.length?g.reduce(function(s,p){return s+score(p);},0)/g.length:0;
-    return h('section',{'class':'team',style:'--tc:var(--t'+i+');--tc-on:var(--t'+i+'-on)','aria-label':BIBS[i]+' bibs'},
-      h('div',{'class':'team-h'},h('b',{text:BIBS[i]+' bibs'}),h('span',{text:g.length+' players · avg '+avg.toFixed(1)})),
-      g.map(function(p){
-        var next=(i+1)%t.n;
-        return h('button',{'class':'tp',type:'button','aria-label':'Move '+p.name+' to '+BIBS[next]+' bibs',
-          onclick:function(){t.assign[p.id]=next;persist();renderAll();}},
-          h('span',{text:p.name||'Unnamed'}),h('span',{'class':'tr',text:fmt(overall(p))}));
-      }));
+    var groups=[];for(var i=0;i<m.n;i++)groups.push([]);
+    ids.forEach(function(id){var g=m.assign[id];if(!(g>=0&&g<m.n))g=0;groups[g].push(byId(id));});
+    groups.forEach(function(g){g.sort(function(a,b){return score(b)-score(a)||a.name.localeCompare(b.name);});});
+    var d=parseYmd(ui.mdate);
+    var when=d?d.toLocaleDateString(undefined,{weekday:'long',day:'numeric',month:'short'}):ui.mdate;
+    box.append(h('p',{'class':'cnt',text:(m.opp?'vs '+m.opp+' · ':'')+when}));
+    box.append(h('div',{'class':'teams'},groups.map(function(g,i){
+      var avg=g.length?g.reduce(function(sum,p){return sum+score(p);},0)/g.length:0;
+      return h('section',{'class':'team',style:'--tc:var(--t'+i+');--tc-on:var(--t'+i+'-on)','aria-label':TEAM_NAMES[i]},
+        h('div',{'class':'team-h'},h('b',{text:TEAM_NAMES[i]}),h('span',{text:g.length+' players · avg '+avg.toFixed(1)})),
+        g.map(function(p){
+          var next=(i+1)%m.n;
+          var row=[h('span',{text:p.name||'Unnamed'}),h('span',{'class':'tr',text:fmt(overall(p))})];
+          if(m.n<2)return h('div',{'class':'tp'},row);
+          return h('button',{'class':'tp',type:'button','aria-label':'Move '+p.name+' to '+TEAM_NAMES[next],
+            onclick:function(){var mm=getMatch();mm.assign[p.id]=next;persist();renderAll();}},row);
+        }));
+    })));
+    if(m.n>1)box.append(h('p',{'class':'hint',text:'Tap a player to move them to the next team.'}));
+    var cp=btn('Copy teams as text',function(){
+      var head='Match'+(m.opp?' vs '+m.opp:'')+' · '+when;
+      copyText(head+'\n'+groups.map(function(g,i){return TEAM_NAMES[i]+' ('+g.length+'): '+g.map(function(p){return p.name;}).join(', ');}).join('\n'),cp);
+    });
+    box.append(cp);
+  }else{
+    box.append(h('p',{'class':'hint',text:'Tick who is available below, then choose how many teams to field.'}));
+  }
+
+  box.append(h('p',{'class':'lbl',text:'Who is available'}));
+  var ps=state.players.slice().sort(function(a,b){return a.name.localeCompare(b.name);});
+  box.append(h('div',{'class':'list'},ps.map(function(p){
+    var on=m.avail.indexOf(p.id)>=0;
+    return h('button',{'class':'arow'+(on?' on':''),type:'button',role:'checkbox','aria-checked':String(on),
+      onclick:function(){
+        var s=getMatch().avail.slice(),i=s.indexOf(p.id);
+        if(i>=0)s.splice(i,1);else s.push(p.id);
+        setAvail(s);
+      }},h('span',{'class':'box',html:CHECK}),h('span',{text:p.name||'Unnamed'}));
   })));
-  box.append(h('p',{'class':'hint',text:'Tap a player to move them to the next team. Unrated players count as 3 when balancing.'}));
-  var cp=btn('Copy teams as text',function(){
-    var d=parseYmd(ui.date);
-    var head='Teams for '+(d?d.toLocaleDateString(undefined,{weekday:'long',day:'numeric',month:'short'}):ui.date);
-    copyText(head+'\n'+groups.map(function(g,i){return BIBS[i]+' bibs ('+g.length+'): '+g.map(function(p){return p.name;}).join(', ');}).join('\n'),cp);
-  });
-  box.append(cp);
   return box;
 }
 
@@ -751,14 +832,14 @@ function renderAll(){
   $('wk').textContent=wi?wi.label:'';
   $('ttl').textContent=TITLES[ui.tab];
   [].forEach.call(document.querySelectorAll('.tab'),function(b){b.setAttribute('aria-current',b.dataset.tab===ui.tab?'page':'false');});
-  var views={squad:viewSquad,train:viewTrain,teams:viewTeams};
+  var views={squad:viewSquad,train:viewTrain,match:viewMatch};
   $('view').replaceChildren(views[ui.tab]());
   renderStatus();
 }
 [].forEach.call(document.querySelectorAll('.tab'),function(b){b.addEventListener('click',function(){gotoTab(b.dataset.tab);});});
 $('settings').addEventListener('click',openSettings);
 window.addEventListener('hashchange',function(){
-  var t=location.hash.slice(1);
+  var t=location.hash.slice(1);if(t==='teams')t='match';
   if(TITLES[t]&&t!==ui.tab){ui.tab=t;renderAll();window.scrollTo(0,0);}
 });
 
